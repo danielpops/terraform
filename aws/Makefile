@@ -1,4 +1,5 @@
-AWS_PROFILE:=dpopes.acct2
+AWS_PROFILE ?= $(shell echo "$$USER.$$(basename $$(dirname $$(pwd)))")
+
 plan: init
 	AWS_PROFILE=${AWS_PROFILE} terraform plan | landscape
 
