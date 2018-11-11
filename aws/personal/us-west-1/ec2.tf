@@ -1,9 +1,8 @@
 data "aws_ami" "ubuntu-xenial" {
-  most_recent = true
 
   filter {
     name   = "name"
-    values = ["ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-2018*"]
+    values = ["ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-20181012"]
   }
 
   filter {
@@ -28,7 +27,7 @@ resource "aws_instance" "dev" {
   instance_type = "t2.micro"
   key_name      = "${aws_key_pair.personal-key.key_name}"
 
-  vpc_security_group_ids = ["${data.aws_security_group.default.id}"]
+  vpc_security_group_ids = ["${data.aws_security_group.default.id}", "${aws_security_group.mosh.id}"]
 
   root_block_device = {
       volume_size=30 # gb
@@ -42,4 +41,27 @@ resource "aws_instance" "dev" {
 resource "aws_eip" "dev" {
   instance = "${aws_instance.dev.id}"
   vpc      = true
+}
+
+resource "aws_security_group" "mosh" {
+  name        = "Mosh"
+  description = "Open up 60000 - 60001 (inclusive) UDP"
+  vpc_id      = "${data.aws_vpc.default.id}"
+}
+
+resource "aws_security_group_rule" "mosh" {
+  type        = "ingress"
+  from_port   = 60000
+  to_port     = 61000
+  protocol    = "UDP"
+  cidr_blocks = ["0.0.0.0/0"]
+
+  security_group_id = "${aws_security_group.mosh.id}"
+}
+
+data "aws_vpc" "default" {
+  filter {
+    name   = "isDefault"
+    values = ["true"]
+  }
 }
